@@ -1,1 +1,1 @@
-# Megami, a Imgur-like app
+# Megami, as in reverse 'Imagem', an Imgur-like app
