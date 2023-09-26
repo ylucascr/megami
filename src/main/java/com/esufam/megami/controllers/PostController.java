@@ -1,5 +1,7 @@
 package com.esufam.megami.controllers;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -13,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.esufam.megami.models.Like;
 import com.esufam.megami.models.Post;
+import com.esufam.megami.repositories.LikeRepository;
 import com.esufam.megami.repositories.PostRepository;
 
 @Controller
@@ -21,6 +25,9 @@ import com.esufam.megami.repositories.PostRepository;
 public class PostController {
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private LikeRepository likeRepository;
 
     @PostMapping(path = "/add")
     public @ResponseBody String addNewPost(@RequestParam String title, @RequestParam String filename, @RequestParam Integer userId) {
@@ -51,6 +58,20 @@ public class PostController {
             post.setStatus(status);
             return postRepository.save(post);
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+    }
+
+    @PostMapping(path = "/{id}")
+    public @ResponseBody String togglePostLike(@PathVariable Integer id, @RequestParam Integer userId) {
+        Optional<Like> like = likeRepository.findByPostIdAndUserId(id, userId);
+        if (like.isEmpty()) {
+            Like l = new Like();
+            l.setPostId(id);
+            l.setUserId(userId);
+            likeRepository.save(l);
+            return "Liked";
+        }
+        likeRepository.delete(like.get());
+        return "Unliked";
     }
 
     @DeleteMapping("/{id}")
