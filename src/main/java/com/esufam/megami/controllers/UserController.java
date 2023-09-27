@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,18 +19,6 @@ import com.esufam.megami.repositories.UserRepository;
 public class UserController {
     @Autowired
     private UserRepository userRepository;
-
-    @PostMapping(path = "/add")
-    public ResponseEntity<User> addNewUser(@RequestBody UserDTO userData) {
-        if (userData.isMissingData()) {
-            return ResponseEntity.badRequest().build();
-        }
-        User n = new User();
-        n.setUsername(userData.username());
-        n.setEmail(userData.email());
-        n.setPassword(userData.password());
-        return ResponseEntity.ok(userRepository.save(n));
-    }
 
     @GetMapping(path = "/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Integer id) {
