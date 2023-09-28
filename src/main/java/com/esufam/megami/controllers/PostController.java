@@ -2,6 +2,7 @@ package com.esufam.megami.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.esufam.megami.dto.PostDTO;
 import com.esufam.megami.models.Like;
 import com.esufam.megami.models.Post;
+import com.esufam.megami.models.User;
 import com.esufam.megami.repositories.LikeRepository;
 import com.esufam.megami.repositories.PostRepository;
 
@@ -28,13 +30,12 @@ public class PostController {
 
     @PostMapping(path = "/add")
     public ResponseEntity<Post> addNewPost(@RequestBody PostDTO postData) {
-        if (postData.isMissingData()) {
+        if (postData.missingCreateInfo()) {
             return ResponseEntity.badRequest().build();
         }
         Post p = new Post();
         p.setTitle(postData.title());
         p.setFilename(postData.filename());
-        p.setUserId(postData.userId());
         p.setStatus('A');
         return ResponseEntity.ok(postRepository.save(p));
     }
@@ -66,9 +67,6 @@ public class PostController {
         if (postData.filename() != null) {
             post.setFilename(postData.filename());
         }
-        if (postData.userId() != null) {
-            post.setUserId(postData.userId());
-        }
         if (postData.status() != 0) {
             post.setStatus(postData.status());
         }
@@ -76,15 +74,12 @@ public class PostController {
     }
 
     @PostMapping(path = "/{id}")
-    public ResponseEntity<String> togglePostLike(@PathVariable Integer id, @RequestBody PostDTO postData) {
-        if (postData.userId() == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        Like like = likeRepository.findByPostIdAndUserId(id, postData.userId()).orElse(null);
+    public ResponseEntity<String> togglePostLike(Authentication authentication, @PathVariable Integer id) {
+        Integer userId = ((User) authentication.getPrincipal()).getId();
+        Like like = likeRepository.findByPostIdAndUserId(id, userId).orElse(null);
         if (like == null) {
             like = new Like();
             like.setPostId(id);
-            like.setUserId(postData.userId());
             likeRepository.save(like);
         } else {
             likeRepository.delete(like);
