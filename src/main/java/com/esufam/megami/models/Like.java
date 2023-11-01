@@ -11,7 +11,11 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity(name = "likes")
 @EntityListeners( AuditingEntityListener.class )
 public class Like {
@@ -26,12 +30,4 @@ public class Like {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
-
-    public Integer getPostId() {
-        return postId;
-    }
-
-    public void setPostId(Integer postId) {
-        this.postId = postId;
-    }
 }
