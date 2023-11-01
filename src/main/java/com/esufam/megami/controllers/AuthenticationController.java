@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.esufam.megami.dto.UserDTO;
+import com.esufam.megami.dto.RegisterDTO;
 import com.esufam.megami.models.User;
 import com.esufam.megami.repositories.UserRepository;
 import com.esufam.megami.services.TokenService;
@@ -29,11 +29,8 @@ public class AuthenticationController {
     private TokenService tokenService;
 
     @PostMapping(path = "/login")
-    public ResponseEntity<String> login(@RequestBody UserDTO userData) {
-        if (userData.missingLoginInfo()) {
-            return ResponseEntity.badRequest().build();
-        }
-        UsernamePasswordAuthenticationToken usernamePassword = new UsernamePasswordAuthenticationToken(userData.username(), userData.password());
+    public ResponseEntity<String> login(@RequestBody RegisterDTO userData) {
+        UsernamePasswordAuthenticationToken usernamePassword = new UsernamePasswordAuthenticationToken(userData.getUsername(), userData.getPassword());
         Authentication authentication = authenticationManager.authenticate(usernamePassword);
 
         String token = tokenService.generateToken((User) authentication.getPrincipal());
@@ -42,21 +39,25 @@ public class AuthenticationController {
     }
 
     @PostMapping(path = "/register")
-    public ResponseEntity<String> register(@RequestBody UserDTO userData) {
-        if (
-            userData.missingRegisterInfo() ||
-            userRepository.findByUsername(userData.username()) != null
-        ) {
+    public ResponseEntity<String> register(@RequestBody RegisterDTO userData) {
+        if (userRepository.findByUsername(userData.getUsername()) != null) {
             return ResponseEntity.badRequest().build();
         }
         
-        String encryptedPassword = new BCryptPasswordEncoder().encode(userData.password());
-        User user = new User();
-        user.setUsername(userData.username());
-        user.setEmail(userData.email());
+        String encryptedPassword = new BCryptPasswordEncoder().encode(userData.getPassword());
+        User user = this.toEntity(userData);
         user.setPassword(encryptedPassword);
         userRepository.save(user);
 
         return ResponseEntity.ok().build();
+    }
+
+    private User toEntity(RegisterDTO dto) {
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setPassword(dto.getPassword());
+        user.setQuestion(dto.getQuestion());
+        user.setAnswer(dto.getAnswer());
+        return user;
     }
 }

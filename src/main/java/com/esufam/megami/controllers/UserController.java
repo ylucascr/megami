@@ -5,19 +5,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.esufam.megami.dto.UserDTO;
+import com.esufam.megami.dto.UserPatchDTO;
 import com.esufam.megami.models.User;
 import com.esufam.megami.repositories.UserRepository;
+import com.esufam.megami.services.TokenService;
 
 @RestController
 @RequestMapping(path = "/users")
 public class UserController {
+    @Autowired
+    private TokenService tokenService;
+
     @Autowired
     private UserRepository userRepository;
 
@@ -35,22 +39,19 @@ public class UserController {
         return ResponseEntity.ok(userRepository.findAll());
     }
 
-    @PutMapping("/{username}")
-    public ResponseEntity<User> updateUser(@PathVariable String username, @RequestBody UserDTO userData) {
+    @PatchMapping("/{username}")
+    public ResponseEntity<String> updateUser(@PathVariable String username, @RequestBody UserPatchDTO userData) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
-        if (userData.username() != null) {
-            user.setUsername(userData.username());
-        }
-        if (userData.email() != null) {
-            user.setEmail(userData.email());
-        }
-        if (userData.password() != null) {
-            user.setPassword(userData.password());
-        }
-        return ResponseEntity.ok(userRepository.save(user));
+        this.patchFromDTO(user, userData);
+
+        userRepository.save(user);
+
+        String token = tokenService.generateToken(user);
+
+        return ResponseEntity.ok(token);
     }
 
     @Transactional
@@ -58,5 +59,20 @@ public class UserController {
     public ResponseEntity<String> deleteUser(@PathVariable String username) {
         userRepository.deleteByUsername(username);
         return ResponseEntity.ok().build();
+    }
+
+    private void patchFromDTO(User user, UserPatchDTO dto) {
+        if (dto.getUsername() != null) {
+            user.setUsername(dto.getUsername());
+        }
+        if (dto.getPassword() != null) {
+            user.setPassword(dto.getPassword());
+        }
+        if (dto.getQuestion() != null) {
+            user.setQuestion(dto.getQuestion());
+        }
+        if (dto.getAnswer() != null) {
+            user.setAnswer(dto.getAnswer());
+        }
     }
 }

@@ -27,9 +27,14 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String username;
 
-    private String email;
-
+    @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false, unique = true)
+    private String question;
+
+    @Column(nullable = false, unique = true)
+    private String answer;
 
     @CreationTimestamp
     private Timestamp createdAt;
