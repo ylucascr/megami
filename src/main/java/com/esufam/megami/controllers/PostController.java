@@ -1,5 +1,6 @@
 package com.esufam.megami.controllers;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.esufam.megami.dto.PostGetDTO;
 import com.esufam.megami.dto.PostPostDTO;
 import com.esufam.megami.models.Post;
+import com.esufam.megami.models.User;
 import com.esufam.megami.repositories.PostRepository;
+import com.esufam.megami.services.UserService;
 import com.esufam.megami.storage.StorageService;
 import com.esufam.megami.storage.exceptions.FileNotFoundInDatabaseException;
 
@@ -32,9 +35,20 @@ public class PostController {
     @Autowired
     private StorageService storageService;
 
+    @Autowired
+    private UserService userService;
+
     @GetMapping(path = "/all")
     public @ResponseBody List<Post> all() {
         return this.repository.findAll()
+            .stream()
+            .collect(Collectors.toList());
+    }
+
+    @GetMapping(path = "/feed")
+    public @ResponseBody List<Post> feed(Principal principal) {
+        User me = this.userService.getUserFromPrincipal(principal);
+        return this.repository.findAllByUserIdIn(me.getFollowedUserIds())
             .stream()
             .collect(Collectors.toList());
     }

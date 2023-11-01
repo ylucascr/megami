@@ -2,6 +2,8 @@ package com.esufam.megami.models;
 
 import java.sql.Timestamp;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -29,6 +31,8 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private String password;
+
+    Set<Integer> followedUserIds = new HashSet<>();
 
     @CreationTimestamp
     private Timestamp createdAt;
