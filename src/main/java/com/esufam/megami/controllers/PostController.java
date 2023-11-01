@@ -1,95 +1,107 @@
 package com.esufam.megami.controllers;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.esufam.megami.dto.PostDTO;
-import com.esufam.megami.models.Like;
+import com.esufam.megami.dto.PostGetDTO;
+import com.esufam.megami.dto.PostPostDTO;
 import com.esufam.megami.models.Post;
-import com.esufam.megami.models.User;
-import com.esufam.megami.repositories.LikeRepository;
 import com.esufam.megami.repositories.PostRepository;
+import com.esufam.megami.storage.StorageService;
+import com.esufam.megami.storage.exceptions.FileNotFoundInDatabaseException;
 
-@RestController
+@Controller
 @RequestMapping(path = "/posts")
 public class PostController {
     @Autowired
-    private PostRepository postRepository;
+    private PostRepository repository;
 
     @Autowired
-    private LikeRepository likeRepository;
-
-    @PostMapping(path = "/add")
-    public ResponseEntity<Post> addNewPost(@RequestBody PostDTO postData) {
-        if (postData.missingCreateInfo()) {
-            return ResponseEntity.badRequest().build();
-        }
-        Post p = new Post();
-        p.setTitle(postData.title());
-        p.setFilename(postData.filename());
-        p.setStatus('A');
-        return ResponseEntity.ok(postRepository.save(p));
-    }
-
-    @GetMapping(path = "/{id}")
-    public ResponseEntity<Post> getPostById(@PathVariable Integer id) {
-        Post post = postRepository.findById(id).orElse(null);
-        if (post == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(post);
-    }
+    private StorageService storageService;
 
     @GetMapping(path = "/all")
-    public ResponseEntity<Iterable<Post>> getAllPosts() {
-        return ResponseEntity.ok(postRepository.findAll());
+    public @ResponseBody List<Post> all() {
+        return this.repository.findAll()
+            .stream()
+            .collect(Collectors.toList());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Post> updatePost(@PathVariable Integer id, @RequestBody PostDTO postData) {
-        Post post = postRepository.findById(id).orElse(null);
-        if (post == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        if (postData.title() != null) {
-            post.setTitle(postData.title());
-        }
-        if (postData.filename() != null) {
-            post.setFilename(postData.filename());
-        }
-        if (postData.status() != 0) {
-            post.setStatus(postData.status());
-        }
-        return ResponseEntity.ok(postRepository.save(post));
+    @GetMapping(path = "/{filename}")
+    public @ResponseBody PostGetDTO one(@PathVariable String filename) {
+        Post post = this.repository.findByFilename(filename).orElseThrow(() -> new FileNotFoundInDatabaseException(filename));
+        return this.toDTO(post);
     }
 
-    @PostMapping(path = "/{id}")
-    public ResponseEntity<String> togglePostLike(Authentication authentication, @PathVariable Integer id) {
-        Integer userId = ((User) authentication.getPrincipal()).getId();
-        Like like = likeRepository.findByPostIdAndUserId(id, userId).orElse(null);
-        if (like == null) {
-            like = new Like();
-            like.setPostId(id);
-            likeRepository.save(like);
-        } else {
-            likeRepository.delete(like);
-        }
-        return ResponseEntity.ok().build();
+    @PostMapping(path = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public @ResponseBody String add(@ModelAttribute PostPostDTO post) {
+        String filename = this.storageService.store(post.getFile());
+
+        Post newPost = new Post();
+        newPost.setTitle(post.getTitle());
+        newPost.setDescription(post.getDescription());
+        newPost.setFilename(filename);
+        
+        this.repository.save(newPost);
+
+        return "Saved!";
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePost(@PathVariable Integer id) {
-        postRepository.deleteById(id);
-        return ResponseEntity.ok().build();
+    @PatchMapping(path = "/{filename}")
+    public @ResponseBody PostGetDTO edit(@PathVariable String filename, @ModelAttribute PostPostDTO newPost) {
+        return this.repository.findByFilename(filename)
+            .map(post -> {
+                this.patchPostFromDTO(newPost, post);
+                return this.repository.save(post);
+            })
+            .map(this::toDTO)
+            .orElseThrow(() -> new FileNotFoundInDatabaseException(filename));
+    }
+
+    @DeleteMapping(path = "/{filename}")
+    public @ResponseBody void delete(@PathVariable String filename) {
+        Optional<Post> post = this.repository.findByFilename(filename);
+        if (post.isPresent()) {
+            String filenameToDelete = post.get().getFilename();
+            this.storageService.delete(filenameToDelete);
+            this.repository.delete(post.get());
+        }
+    }
+
+    private void patchPostFromDTO(PostPostDTO dto, Post post) {
+        if (dto.getTitle() != null) {
+            post.setTitle(dto.getTitle());
+        }
+        if (dto.getDescription() != null) {
+            post.setDescription(dto.getDescription());
+        }
+        if (dto.getFile() != null) {
+            this.storageService.delete(post.getFilename());
+            String filename = this.storageService.store(dto.getFile());
+            post.setFilename(filename);
+        }
+    }
+
+    private PostGetDTO toDTO(Post post) {
+        PostGetDTO dto = new PostGetDTO();
+        dto.setTitle(post.getTitle());
+        dto.setDescription(post.getDescription());
+        dto.setFilename(post.getFilename());
+        dto.setUserId(post.getUserId());
+        dto.setCreatedAt(post.getCreatedAt());
+        dto.setUpdatedAt(post.getUpdatedAt());
+        return dto;
     }
 }

@@ -1,7 +1,6 @@
 package com.esufam.megami.models;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -22,23 +21,11 @@ import lombok.Setter;
 @Entity(name = "posts")
 @EntityListeners( AuditingEntityListener.class )
 public class Post {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id;
-
+    private @Id @GeneratedValue(strategy = GenerationType.IDENTITY) Integer id;
     private String title;
-
-    @Column(nullable = false, unique = true)
-    private String filename;
-
-    @CreatedBy
-    private Integer userId;
-
-    private char status;
-
-   @CreationTimestamp
-    private Timestamp createdAt;
-
-    @UpdateTimestamp
-    private Timestamp updatedAt;
+    private String description;
+    private @Column(unique = true, nullable = false) String filename;
+    private @CreatedBy @Column(nullable = false) Integer userId;
+    private @CreationTimestamp Timestamp createdAt;
+    private @UpdateTimestamp Timestamp updatedAt;
 }
