@@ -2,6 +2,7 @@ package com.esufam.megami.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,9 +21,9 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    @GetMapping(path = "/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
-        User user = userRepository.findById(id).orElse(null);
+    @GetMapping(path = "/{username}")
+    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
+        User user = userRepository.findByUsername(username);
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
@@ -34,9 +35,9 @@ public class UserController {
         return ResponseEntity.ok(userRepository.findAll());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Integer id, @RequestBody UserDTO userData) {
-        User user = userRepository.findById(id).orElse(null);
+    @PutMapping("/{username}")
+    public ResponseEntity<User> updateUser(@PathVariable String username, @RequestBody UserDTO userData) {
+        User user = userRepository.findByUsername(username);
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
@@ -52,9 +53,10 @@ public class UserController {
         return ResponseEntity.ok(userRepository.save(user));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Integer id) {
-        userRepository.deleteById(id);
+    @Transactional
+    @DeleteMapping("/{username}")
+    public ResponseEntity<String> deleteUser(@PathVariable String username) {
+        userRepository.deleteByUsername(username);
         return ResponseEntity.ok().build();
     }
 }
