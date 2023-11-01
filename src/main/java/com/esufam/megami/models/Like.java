@@ -1,6 +1,6 @@
 package com.esufam.megami.models;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedBy;
@@ -29,5 +29,5 @@ public class Like {
     private Integer postId;
 
     @CreationTimestamp
-    private LocalDateTime createdAt;
+    private Timestamp createdAt;
 }

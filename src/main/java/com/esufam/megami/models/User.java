@@ -1,9 +1,10 @@
 package com.esufam.megami.models;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 import java.util.Collection;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -31,7 +32,10 @@ public class User implements UserDetails {
     private String password;
 
     @CreationTimestamp
-    private LocalDateTime createdAt;
+    private Timestamp createdAt;
+
+    @UpdateTimestamp
+    private Timestamp updatedAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
