@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.esufam.megami.dto.RegisterDTO;
+import com.esufam.megami.dto.AuthDTO;
 import com.esufam.megami.models.User;
 import com.esufam.megami.repositories.UserRepository;
 import com.esufam.megami.services.TokenService;
@@ -29,7 +29,7 @@ public class AuthenticationController {
     private TokenService tokenService;
 
     @PostMapping(path = "/login")
-    public ResponseEntity<String> login(@RequestBody RegisterDTO userData) {
+    public ResponseEntity<String> login(@RequestBody AuthDTO userData) {
         UsernamePasswordAuthenticationToken usernamePassword = new UsernamePasswordAuthenticationToken(userData.getUsername(), userData.getPassword());
         Authentication authentication = authenticationManager.authenticate(usernamePassword);
 
@@ -39,7 +39,7 @@ public class AuthenticationController {
     }
 
     @PostMapping(path = "/register")
-    public ResponseEntity<String> register(@RequestBody RegisterDTO userData) {
+    public ResponseEntity<String> register(@RequestBody AuthDTO userData) {
         if (userRepository.findByUsername(userData.getUsername()) != null) {
             return ResponseEntity.badRequest().build();
         }
@@ -52,12 +52,10 @@ public class AuthenticationController {
         return ResponseEntity.ok().build();
     }
 
-    private User toEntity(RegisterDTO dto) {
+    private User toEntity(AuthDTO dto) {
         User user = new User();
         user.setUsername(dto.getUsername());
         user.setPassword(dto.getPassword());
-        user.setQuestion(dto.getQuestion());
-        user.setAnswer(dto.getAnswer());
         return user;
     }
 }
