@@ -53,6 +53,20 @@ public class PostController {
             .collect(Collectors.toList()));
     }
 
+    @GetMapping(path = "/from/{username}")
+    public @ResponseBody ResponseEntity<List<PostGetDTO>> byUser(@PathVariable String username) {
+        Integer userId = this.userService.getUserIdFromUsername(username);
+        if (userId == -1) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(
+            this.repository.findAllByUserId(userId)
+            .stream()
+            .map(this::toDTO)
+            .collect(Collectors.toList())
+        );
+    }
+
     @GetMapping(path = "/{filename}")
     public @ResponseBody ResponseEntity<PostGetDTO> one(@PathVariable String filename) {
         Post post = this.repository.findByFilename(filename).orElse(null);

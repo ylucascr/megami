@@ -12,6 +12,12 @@ import com.esufam.megami.repositories.UserRepository;
 public class UserService {
     @Autowired
     private UserRepository userRepository;
+
+    public Integer getUserIdFromUsername(String username) {
+        User user = this.userRepository.findByUsername(username);
+        if (user == null) return -1;
+        return user.getId();
+    }
     
     public User getUserFromPrincipal(Principal principal) {
         String username = principal.getName();

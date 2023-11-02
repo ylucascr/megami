@@ -10,6 +10,7 @@ import com.esufam.megami.models.Post;
 
 public interface PostRepository extends CrudRepository<Post, Integer> {
     List<Post> findAll();
+    List<Post> findAllByUserId(Integer userId);
     List<Post> findAllByUserIdIn(Set<Integer> userIds);
     Optional<Post> findByFilename(String Filename);
 }
