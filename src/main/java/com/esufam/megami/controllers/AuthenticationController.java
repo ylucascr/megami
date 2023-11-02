@@ -40,6 +40,9 @@ public class AuthenticationController {
 
     @PostMapping(path = "/login")
     public ResponseEntity<Response> login(@RequestBody AuthDTO userData) {
+        if (isInvalid(userData)) {
+            return ResponseEntity.badRequest().build();
+        }
         UsernamePasswordAuthenticationToken usernamePassword = new UsernamePasswordAuthenticationToken(userData.getUsername(), userData.getPassword());
         Authentication authentication = authenticationManager.authenticate(usernamePassword);
 
@@ -53,7 +56,7 @@ public class AuthenticationController {
 
     @PostMapping(path = "/register")
     public ResponseEntity<Response> register(@RequestBody AuthDTO userData) {
-        if (userRepository.findByUsername(userData.getUsername()) != null) {
+        if (isInvalid(userData) || userRepository.findByUsername(userData.getUsername()) != null) {
             return ResponseEntity.badRequest().build();
         }
         
@@ -70,5 +73,19 @@ public class AuthenticationController {
         user.setUsername(dto.getUsername());
         user.setPassword(dto.getPassword());
         return user;
+    }
+
+    private boolean isInvalid(AuthDTO dto) {
+        if (
+            dto.getUsername() == null ||
+            dto.getUsername().length() < 1 ||
+            dto.getPassword() == null ||
+            dto.getPassword().length() < 8 ||
+            dto.getPassword().length() > 14
+        ) {
+            return true;
+        }
+
+        return false;
     }
 }
