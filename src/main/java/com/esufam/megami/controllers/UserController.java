@@ -1,7 +1,11 @@
 package com.esufam.megami.controllers;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.esufam.megami.dto.UserDTO;
+import com.esufam.megami.models.Response;
 import com.esufam.megami.models.User;
 import com.esufam.megami.repositories.UserRepository;
 import com.esufam.megami.services.UserService;
@@ -28,21 +33,26 @@ public class UserController {
     private UserService userService;
     
     @GetMapping(path = "/{username}")
-    public ResponseEntity<UserDTO> getUserByUsername(@PathVariable String username) {
+    public ResponseEntity<Response> getUserByUsername(@PathVariable String username) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
-            return ResponseEntity.notFound().build();
+            Map<String, Object> data = new HashMap<>();
+            data.put("user", "User " + username + " not found");
+            return new ResponseEntity<>(Response.fail(data), HttpStatus.NOT_FOUND);
         }
-        return ResponseEntity.ok(this.toDTO(user));
+
+        return ResponseEntity.ok(Response.success(this.toDTO(user)));
     }
 
     @PostMapping(value="/{username}/follow")
-    public ResponseEntity<String> followUser(Principal principal, @PathVariable String username) {
+    public ResponseEntity<Response> followUser(Principal principal, @PathVariable String username) {
         User me = this.userService.getUserFromPrincipal(principal);
         Integer userId = this.userService.getUserIdFromUsername(username);
 
         if (userId == -1) {
-            return ResponseEntity.notFound().build();
+            Map<String, Object> data = new HashMap<>();
+            data.put("user", "User " + username + " not found");
+            return new ResponseEntity<>(Response.fail(data), HttpStatus.NOT_FOUND);
         }
 
         if (me.getFollowedUserIds().contains(userId)) {
@@ -53,15 +63,15 @@ public class UserController {
 
         this.userRepository.save(me);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Response.success(null));
     }
     
 
     @Transactional
     @DeleteMapping("/{username}")
-    public ResponseEntity<String> deleteUser(@PathVariable String username) {
+    public ResponseEntity<Response> deleteUser(@PathVariable String username) {
         userRepository.deleteByUsername(username);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Response.success(null));
     }
 
     private UserDTO toDTO(User user) {

@@ -1,11 +1,14 @@
 package com.esufam.megami.controllers;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.esufam.megami.dto.PostGetDTO;
 import com.esufam.megami.dto.PostPostDTO;
 import com.esufam.megami.models.Post;
+import com.esufam.megami.models.Response;
 import com.esufam.megami.models.User;
 import com.esufam.megami.repositories.PostRepository;
 import com.esufam.megami.services.UserService;
@@ -39,45 +43,52 @@ public class PostController {
     private UserService userService;
 
     @GetMapping(path = "/all")
-    public @ResponseBody ResponseEntity<List<Post>> all() {
-        return ResponseEntity.ok(this.repository.findAll()
+    public @ResponseBody ResponseEntity<Response> all() {
+        List<Post> posts = this.repository.findAll()
             .stream()
-            .collect(Collectors.toList()));
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(Response.success(posts));
     }
 
     @GetMapping(path = "/feed")
-    public @ResponseBody ResponseEntity<List<Post>> feed(Principal principal) {
+    public @ResponseBody ResponseEntity<Response> feed(Principal principal) {
         User me = this.userService.getUserFromPrincipal(principal);
-        return ResponseEntity.ok(this.repository.findAllByUserIdIn(me.getFollowedUserIds())
+        List<Post> posts = this.repository.findAllByUserIdIn(me.getFollowedUserIds())
             .stream()
-            .collect(Collectors.toList()));
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(Response.success(posts));
     }
 
     @GetMapping(path = "/from/{username}")
-    public @ResponseBody ResponseEntity<List<PostGetDTO>> byUser(@PathVariable String username) {
+    public @ResponseBody ResponseEntity<Response> byUser(@PathVariable String username) {
         Integer userId = this.userService.getUserIdFromUsername(username);
         if (userId == -1) {
-            return ResponseEntity.notFound().build();
+            Map<String, Object> data = new HashMap<>();
+            data.put("user", "User " + username + " not found");
+            return new ResponseEntity<>(Response.fail(data), HttpStatus.NOT_FOUND);
         }
-        return ResponseEntity.ok(
-            this.repository.findAllByUserId(userId)
+
+        List<PostGetDTO> posts = this.repository.findAllByUserId(userId)
             .stream()
             .map(this::toDTO)
-            .collect(Collectors.toList())
-        );
+            .collect(Collectors.toList());
+
+        return ResponseEntity.ok(Response.success(posts));
     }
 
     @GetMapping(path = "/{filename}")
-    public @ResponseBody ResponseEntity<PostGetDTO> one(@PathVariable String filename) {
+    public @ResponseBody ResponseEntity<Response> one(@PathVariable String filename) {
         Post post = this.repository.findByFilename(filename).orElse(null);
         if (post == null) {
-            return ResponseEntity.notFound().build();
+            Map<String, Object> data = new HashMap<>();
+            data.put("filename", "File " + filename + " not found");
+            return new ResponseEntity<>(Response.fail(data), HttpStatus.NOT_FOUND);
         }
-        return ResponseEntity.ok(this.toDTO(post));
+        return ResponseEntity.ok(Response.success(this.toDTO(post)));
     }
 
     @PostMapping(path = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public @ResponseBody ResponseEntity<String> add(@ModelAttribute PostPostDTO post) {
+    public @ResponseBody ResponseEntity<Response> add(@ModelAttribute PostPostDTO post) {
         String filename = this.storageService.store(post.getFile());
 
         Post newPost = new Post();
@@ -87,23 +98,25 @@ public class PostController {
         
         this.repository.save(newPost);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Response.success(null));
     }
 
     @PatchMapping(path = "/{filename}")
-    public @ResponseBody ResponseEntity<PostGetDTO> edit(@PathVariable String filename, @ModelAttribute PostPostDTO newPost) {
+    public @ResponseBody ResponseEntity<Response> edit(@PathVariable String filename, @ModelAttribute PostPostDTO newPost) {
         Post post = this.repository.findByFilename(filename).orElse(null);
         if (post == null) {
-            return ResponseEntity.notFound().build();
+            Map<String, Object> data = new HashMap<>();
+            data.put("filename", "File " + filename + " not found");
+            return new ResponseEntity<>(Response.fail(data), HttpStatus.NOT_FOUND);
         }
         this.patchPostFromDTO(newPost, post);
         return ResponseEntity.ok(
-            this.toDTO(this.repository.save(post))
+            Response.success(this.toDTO(this.repository.save(post)))
         );
     }
 
     @DeleteMapping(path = "/{filename}")
-    public @ResponseBody ResponseEntity<String> delete(@PathVariable String filename) {
+    public @ResponseBody ResponseEntity<Response> delete(@PathVariable String filename) {
         Optional<Post> post = this.repository.findByFilename(filename);
         if (post.isPresent()) {
             String filenameToDelete = post.get().getFilename();
@@ -111,7 +124,7 @@ public class PostController {
             this.repository.delete(post.get());
         }
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Response.success(null));
     }
 
     private void patchPostFromDTO(PostPostDTO dto, Post post) {
