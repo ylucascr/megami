@@ -1,7 +1,6 @@
 package com.esufam.megami.controllers;
 
 import java.security.Principal;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,21 +39,21 @@ public class UserController {
     @PostMapping(value="/{username}/follow")
     public ResponseEntity<String> followUser(Principal principal, @PathVariable String username) {
         User me = this.userService.getUserFromPrincipal(principal);
-        User user = userRepository.findByUsername(username);
+        Integer userId = this.userService.getUserIdFromUsername(username);
 
-        if (user == null) {
+        if (userId == -1) {
             return ResponseEntity.notFound().build();
         }
 
-        if (me.getFollowedUserIds().contains(user.getId())) {
-            me.getFollowedUserIds().remove(user.getId());
+        if (me.getFollowedUserIds().contains(userId)) {
+            me.getFollowedUserIds().remove(userId);
         } else {
-            me.getFollowedUserIds().add(user.getId());
+            me.getFollowedUserIds().add(userId);
         }
 
         this.userRepository.save(me);
 
-        return ResponseEntity.ok("Done");
+        return ResponseEntity.ok().build();
     }
     
 
