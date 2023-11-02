@@ -44,8 +44,9 @@ public class PostController {
 
     @GetMapping(path = "/all")
     public @ResponseBody ResponseEntity<Response> all() {
-        List<Post> posts = this.repository.findAll()
+        List<PostGetDTO> posts = this.repository.findAll()
             .stream()
+            .map(this::toDTO)
             .collect(Collectors.toList());
         return ResponseEntity.ok(Response.success(posts));
     }
@@ -53,8 +54,9 @@ public class PostController {
     @GetMapping(path = "/feed")
     public @ResponseBody ResponseEntity<Response> feed(Principal principal) {
         User me = this.userService.getUserFromPrincipal(principal);
-        List<Post> posts = this.repository.findAllByUserIdIn(me.getFollowedUserIds())
+        List<PostGetDTO> posts = this.repository.findAllByUserIdIn(me.getFollowedUserIds())
             .stream()
+            .map(this::toDTO)
             .collect(Collectors.toList());
         return ResponseEntity.ok(Response.success(posts));
     }
@@ -146,7 +148,7 @@ public class PostController {
         dto.setTitle(post.getTitle());
         dto.setDescription(post.getDescription());
         dto.setFilename(post.getFilename());
-        dto.setUserId(post.getUserId());
+        dto.setUploader(this.userService.getUsernameFromUserId(post.getUserId()));
         dto.setCreatedAt(post.getCreatedAt());
         dto.setUpdatedAt(post.getUpdatedAt());
         return dto;

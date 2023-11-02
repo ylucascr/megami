@@ -13,6 +13,12 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    public String getUsernameFromUserId(Integer userId) {
+        User user = this.userRepository.findById(userId).orElse(null);
+        if (user == null) return "unknown";
+        return user.getUsername();
+    }
+    
     public Integer getUserIdFromUsername(String username) {
         User user = this.userRepository.findByUsername(username);
         if (user == null) return -1;

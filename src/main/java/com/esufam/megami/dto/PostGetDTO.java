@@ -11,7 +11,7 @@ public class PostGetDTO {
     private String title;
     private String description;
     private String filename;
-    private Integer userId;
+    private String uploader;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }
