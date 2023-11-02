@@ -35,6 +35,7 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                     .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
+                    .requestMatchers("/uploads/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/posts/all").permitAll()
                     .anyRequest().authenticated()
                 )
