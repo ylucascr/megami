@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,6 @@ import com.esufam.megami.models.User;
 import com.esufam.megami.repositories.PostRepository;
 import com.esufam.megami.services.UserService;
 import com.esufam.megami.storage.StorageService;
-import com.esufam.megami.storage.exceptions.FileNotFoundInDatabaseException;
 
 @Controller
 @RequestMapping(path = "/posts")
@@ -39,28 +39,31 @@ public class PostController {
     private UserService userService;
 
     @GetMapping(path = "/all")
-    public @ResponseBody List<Post> all() {
-        return this.repository.findAll()
+    public @ResponseBody ResponseEntity<List<Post>> all() {
+        return ResponseEntity.ok(this.repository.findAll()
             .stream()
-            .collect(Collectors.toList());
+            .collect(Collectors.toList()));
     }
 
     @GetMapping(path = "/feed")
-    public @ResponseBody List<Post> feed(Principal principal) {
+    public @ResponseBody ResponseEntity<List<Post>> feed(Principal principal) {
         User me = this.userService.getUserFromPrincipal(principal);
-        return this.repository.findAllByUserIdIn(me.getFollowedUserIds())
+        return ResponseEntity.ok(this.repository.findAllByUserIdIn(me.getFollowedUserIds())
             .stream()
-            .collect(Collectors.toList());
+            .collect(Collectors.toList()));
     }
 
     @GetMapping(path = "/{filename}")
-    public @ResponseBody PostGetDTO one(@PathVariable String filename) {
-        Post post = this.repository.findByFilename(filename).orElseThrow(() -> new FileNotFoundInDatabaseException(filename));
-        return this.toDTO(post);
+    public @ResponseBody ResponseEntity<PostGetDTO> one(@PathVariable String filename) {
+        Post post = this.repository.findByFilename(filename).orElse(null);
+        if (post == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(this.toDTO(post));
     }
 
     @PostMapping(path = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public @ResponseBody String add(@ModelAttribute PostPostDTO post) {
+    public @ResponseBody ResponseEntity<String> add(@ModelAttribute PostPostDTO post) {
         String filename = this.storageService.store(post.getFile());
 
         Post newPost = new Post();
@@ -70,28 +73,31 @@ public class PostController {
         
         this.repository.save(newPost);
 
-        return "Saved!";
+        return ResponseEntity.ok().build();
     }
 
     @PatchMapping(path = "/{filename}")
-    public @ResponseBody PostGetDTO edit(@PathVariable String filename, @ModelAttribute PostPostDTO newPost) {
-        return this.repository.findByFilename(filename)
-            .map(post -> {
-                this.patchPostFromDTO(newPost, post);
-                return this.repository.save(post);
-            })
-            .map(this::toDTO)
-            .orElseThrow(() -> new FileNotFoundInDatabaseException(filename));
+    public @ResponseBody ResponseEntity<PostGetDTO> edit(@PathVariable String filename, @ModelAttribute PostPostDTO newPost) {
+        Post post = this.repository.findByFilename(filename).orElse(null);
+        if (post == null) {
+            return ResponseEntity.notFound().build();
+        }
+        this.patchPostFromDTO(newPost, post);
+        return ResponseEntity.ok(
+            this.toDTO(this.repository.save(post))
+        );
     }
 
     @DeleteMapping(path = "/{filename}")
-    public @ResponseBody void delete(@PathVariable String filename) {
+    public @ResponseBody ResponseEntity<String> delete(@PathVariable String filename) {
         Optional<Post> post = this.repository.findByFilename(filename);
         if (post.isPresent()) {
             String filenameToDelete = post.get().getFilename();
             this.storageService.delete(filenameToDelete);
             this.repository.delete(post.get());
         }
+
+        return ResponseEntity.ok().build();
     }
 
     private void patchPostFromDTO(PostPostDTO dto, Post post) {
