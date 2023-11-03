@@ -39,7 +39,8 @@ public class UserController {
     private UserService userService;
     
     @GetMapping(path = "/{username}")
-    public ResponseEntity<Response> getUserByUsername(@PathVariable String username) {
+    public ResponseEntity<Response> getUserByUsername(Principal principal, @PathVariable String username) {
+        User me = this.userService.getUserFromPrincipal(principal);
         User user = userRepository.findByUsername(username);
         if (user == null) {
             Map<String, Object> data = new HashMap<>();
@@ -47,7 +48,7 @@ public class UserController {
             return new ResponseEntity<>(Response.fail(data), HttpStatus.NOT_FOUND);
         }
 
-        return ResponseEntity.ok(Response.success(this.toDTO(user)));
+        return ResponseEntity.ok(Response.success(this.toDTO(user, me)));
     }
 
     @PostMapping(value="/{username}/follow")
@@ -96,10 +97,11 @@ public class UserController {
         return ResponseEntity.ok(Response.success(null));
     }
 
-    private UserDTO toDTO(User user) {
+    private UserDTO toDTO(User user, User me) {
         UserDTO dto = new UserDTO();
         dto.setUsername(user.getUsername());
         dto.setCreatedAt(user.getCreatedAt());
+        dto.setFollowed(me.getFollowedUserIds().contains(user.getId()));
         dto.setUpdatedAt(user.getUpdatedAt());
         return dto;
     }

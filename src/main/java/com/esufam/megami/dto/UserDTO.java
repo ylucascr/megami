@@ -9,6 +9,7 @@ import lombok.Setter;
 @Setter
 public class UserDTO {
     private String username;
+    private boolean followed;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }
