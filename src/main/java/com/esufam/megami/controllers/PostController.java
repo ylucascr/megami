@@ -69,7 +69,7 @@ public class PostController {
     @GetMapping(path = "/from/{username}")
     public @ResponseBody ResponseEntity<Response> byUser(@PathVariable String username) {
         Integer userId = this.userService.getUserIdFromUsername(username);
-        if (userId == -1) {
+        if (userId == -1 && !username.equals("unknown")) {
             Map<String, Object> data = new HashMap<>();
             data.put("user", "User " + username + " not found");
             return new ResponseEntity<>(Response.fail(data), HttpStatus.NOT_FOUND);

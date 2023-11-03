@@ -2,6 +2,7 @@ package com.esufam.megami.controllers;
 
 import java.security.Principal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.esufam.megami.dto.UserDTO;
+import com.esufam.megami.models.Post;
 import com.esufam.megami.models.Response;
 import com.esufam.megami.models.User;
+import com.esufam.megami.repositories.PostRepository;
 import com.esufam.megami.repositories.UserRepository;
 import com.esufam.megami.services.UserService;
 
@@ -28,6 +31,9 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     @Autowired
     private UserService userService;
@@ -70,13 +76,21 @@ public class UserController {
     @Transactional
     @DeleteMapping("/{username}")
     public ResponseEntity<Response> deleteUser(Principal principal, @PathVariable String username) {
-        String me = this.userService.getUsernameFromPrincipal(principal);
+        User me = this.userService.getUserFromPrincipal(principal);
 
-        if (!username.equals(me)) {
+        if (!username.equals(me.getUsername())) {
             Map<String, Object> data = new HashMap<>();
             data.put("auth", "You cannot delete other users but yourself");
             return new ResponseEntity<>(Response.fail(data), HttpStatus.UNAUTHORIZED);
         }
+
+        // set all posts by deleted user to special id
+        List<Post> posts = this.postRepository.findAllByUserId(me.getId());
+        posts.stream()
+            .forEach(post -> {
+                post.setUserId(-1);
+                this.postRepository.save(post);
+            });
 
         userRepository.deleteByUsername(username);
         return ResponseEntity.ok(Response.success(null));
