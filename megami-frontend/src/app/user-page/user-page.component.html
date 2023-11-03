@@ -1,0 +1,10 @@
+<section class="grid" *ngIf="!isFetching && user?.username !== 'unknown'">
+    <hgroup>
+        <h1 class="text-with-button">
+            {{ user?.username }}
+            <a href="#" role="button" (click)="followUser($event)">{{ user?.followed ? 'Unfollow' : 'Follow' }}</a>
+        </h1>
+        <h2>Since {{ user?.createdAt | date : 'MMM d, y HH:mm'  }}</h2>
+    </hgroup>
+</section>
+<app-post-list [posts]="posts" [isFetching]="isFetching" (postDeleted)="getPosts(user)"></app-post-list>

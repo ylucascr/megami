@@ -1,0 +1,13 @@
+<section class="container">
+    <ng-container *ngIf="posts.length > 0; then content; else noContent"></ng-container>
+    <ng-template #noContent>
+        <h1>{{ isFetching ? 'Loading' : emptyListTxt ? emptyListTxt : 'Nothing to show... for now.' }}</h1>
+    </ng-template>
+    <ng-template #content>
+        <div class="image-list">
+            <app-post *ngFor="let post of posts" [post]="post"
+                (postDeleted)="handleDelete()"
+            ></app-post>
+        </div>
+    </ng-template>
+</section>

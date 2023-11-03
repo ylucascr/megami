@@ -1,0 +1,17 @@
+<article class="grid">
+    <div>
+        <hgroup>
+            <h1>Megami</h1>
+            <h2>An Imgur-like app</h2>
+        </hgroup>
+        <form [formGroup]="form" (ngSubmit)="handleSubmit()">
+            <input type="text" name="username" placeholder="Username" aria-label="Username" formControlName="username"/>
+            <input type="password" name="password" placeholder="Password" aria-label="Password" formControlName="password"/>
+            <div class="grid">
+                <button type="submit" class="contrast" [disabled]="form.invalid">Enter</button>
+            </div>
+        </form>
+        <a routerLink="/">No thanks</a>
+    </div>
+    <div></div>
+</article>

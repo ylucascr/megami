@@ -1,0 +1,25 @@
+<div class="image grid">
+    <a [href]="'http://localhost:8080/uploads/' + post.filename" target="_blank">
+        <img [src]="'http://localhost:8080/uploads/' + post.filename"/>
+    </a>
+    <div class="container">
+        <nav>
+            <ul></ul>
+            <ul>
+                <li>By: <a [routerLink]="['/u', post.uploader]">{{ post.uploader }}</a></li>
+            </ul>
+        </nav>
+        <hgroup>
+            <h1>{{ post.title || post.filename }}</h1>
+            <h2>{{ post.description || 'No description provided' }}</h2>
+        </hgroup>
+        <div class="container">
+            <p>Uploaded in <strong>{{ post.createdAt | date }}</strong></p>
+            <p *ngIf="post.createdAt !== post.updatedAt">Updated in <strong>{{ post.updatedAt | date }}</strong></p>
+            <div class="button-group">
+                <a [routerLink]="['/', post.filename, 'edit']" role="button" class="secondary" *ngIf="(authService.loggedInUser | async) === post.uploader">Edit</a>
+                <a href="" role="button" class="secondary" *ngIf="(authService.loggedInUser | async) === post.uploader" (click)="handleDelete($event)">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>

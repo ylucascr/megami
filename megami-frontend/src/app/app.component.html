@@ -1,0 +1,39 @@
+<nav class="container-fluid" *ngIf="!router.url.includes('auth')">
+    <ng-container *ngIf="!router.url.includes('form'); then mainPage; else elsewhere"></ng-container>
+    <ng-template #mainPage>
+        <ul>
+            <li *ngIf="!(loggedInUser | async)"><strong><a routerLink="/auth">Login</a></strong></li>
+            <li *ngIf="(loggedInUser | async) as loggedInUser">
+                <details role="list">
+                  <summary aria-haspopup="listbox" role="link"><strong>{{ loggedInUser }}</strong></summary>
+                  <ul role="listbox">
+                    <li><strong><a class="fake-link" (click)="handleLogout($event)">Logout</a></strong></li>
+                    <li><strong><a class="fake-link" (click)="handleDelete($event)">Delete account</a></strong></li>
+                  </ul>
+                </details>
+            </li>
+        </ul>
+        <ul>
+            <li>
+                <strong>
+                    <a routerLink="/">Megami</a> / 
+                    <a routerLink="/feed">Feed</a>
+                </strong>
+            </li>
+        </ul>
+        <ul>
+            <li *ngIf="loggedInUser | async"><strong><a routerLink="/form">Upload</a></strong></li>
+        </ul>
+    </ng-template>
+    <ng-template #elsewhere>
+        <ul></ul>
+        <ul>
+            <li><strong><a routerLink="/">Megami</a></strong></li>
+        </ul>
+        <ul></ul>
+    </ng-template>
+</nav>
+
+<main class="container">
+    <router-outlet></router-outlet>
+</main>
