@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -42,9 +43,13 @@ public class PostController {
     @Autowired
     private UserService userService;
 
+    private Sort sortByLastModified() {
+        return Sort.by(Sort.Direction.DESC, "updatedAt");
+    }
+
     @GetMapping(path = "/all")
     public @ResponseBody ResponseEntity<Response> all() {
-        List<PostGetDTO> posts = this.repository.findAll()
+        List<PostGetDTO> posts = this.repository.findAll(this.sortByLastModified())
             .stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
@@ -54,7 +59,7 @@ public class PostController {
     @GetMapping(path = "/feed")
     public @ResponseBody ResponseEntity<Response> feed(Principal principal) {
         User me = this.userService.getUserFromPrincipal(principal);
-        List<PostGetDTO> posts = this.repository.findAllByUserIdIn(me.getFollowedUserIds())
+        List<PostGetDTO> posts = this.repository.findAllByUserIdIn(me.getFollowedUserIds(), this.sortByLastModified())
             .stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
@@ -70,7 +75,7 @@ public class PostController {
             return new ResponseEntity<>(Response.fail(data), HttpStatus.NOT_FOUND);
         }
 
-        List<PostGetDTO> posts = this.repository.findAllByUserId(userId)
+        List<PostGetDTO> posts = this.repository.findAllByUserId(userId, this.sortByLastModified())
             .stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
