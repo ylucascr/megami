@@ -24,6 +24,14 @@ public class UserService {
         if (user == null) return -1;
         return user.getId();
     }
+
+    public String getUsernameFromPrincipal(Principal principal) {
+        return this.getUserFromPrincipal(principal).getUsername();
+    }
+
+    public Integer getUserIdFromPrincipal(Principal principal) {
+        return this.getUserFromPrincipal(principal).getId();
+    }
     
     public User getUserFromPrincipal(Principal principal) {
         String username = principal.getName();

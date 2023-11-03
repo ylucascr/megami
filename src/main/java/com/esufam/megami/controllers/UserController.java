@@ -69,7 +69,15 @@ public class UserController {
 
     @Transactional
     @DeleteMapping("/{username}")
-    public ResponseEntity<Response> deleteUser(@PathVariable String username) {
+    public ResponseEntity<Response> deleteUser(Principal principal, @PathVariable String username) {
+        String me = this.userService.getUsernameFromPrincipal(principal);
+
+        if (!username.equals(me)) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("auth", "You cannot delete other users but yourself");
+            return new ResponseEntity<>(Response.fail(data), HttpStatus.UNAUTHORIZED);
+        }
+
         userRepository.deleteByUsername(username);
         return ResponseEntity.ok(Response.success(null));
     }

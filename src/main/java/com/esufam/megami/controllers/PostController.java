@@ -109,13 +109,21 @@ public class PostController {
     }
 
     @PatchMapping(path = "/{filename}")
-    public @ResponseBody ResponseEntity<Response> edit(@PathVariable String filename, @ModelAttribute PostPostDTO newPost) {
+    public @ResponseBody ResponseEntity<Response> edit(Principal principal, @PathVariable String filename, @ModelAttribute PostPostDTO newPost) {
+        Integer me = this.userService.getUserIdFromPrincipal(principal);
         Post post = this.repository.findByFilename(filename).orElse(null);
         if (post == null) {
             Map<String, Object> data = new HashMap<>();
             data.put("filename", "File " + filename + " not found");
             return new ResponseEntity<>(Response.fail(data), HttpStatus.NOT_FOUND);
         }
+
+        if (post.getUserId() != me) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("auth", "You cannot edit a post you didn't upload");
+            return new ResponseEntity<>(Response.fail(data), HttpStatus.UNAUTHORIZED);
+        }
+
         this.patchPostFromDTO(newPost, post);
         return ResponseEntity.ok(
             Response.success(this.toDTO(this.repository.save(post)))
@@ -123,9 +131,16 @@ public class PostController {
     }
 
     @DeleteMapping(path = "/{filename}")
-    public @ResponseBody ResponseEntity<Response> delete(@PathVariable String filename) {
+    public @ResponseBody ResponseEntity<Response> delete(Principal principal, @PathVariable String filename) {
+        Integer me = this.userService.getUserIdFromPrincipal(principal);
         Optional<Post> post = this.repository.findByFilename(filename);
         if (post.isPresent()) {
+            if (post.get().getUserId() != me) {
+                Map<String, Object> data = new HashMap<>();
+                data.put("auth", "You cannot delete a post you didn't upload");
+                return new ResponseEntity<>(Response.fail(data), HttpStatus.UNAUTHORIZED);
+            }
+
             String filenameToDelete = post.get().getFilename();
             this.storageService.delete(filenameToDelete);
             this.repository.delete(post.get());
