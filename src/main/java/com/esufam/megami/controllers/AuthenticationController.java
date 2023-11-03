@@ -63,7 +63,7 @@ public class AuthenticationController {
 
     @PostMapping(path = "/register")
     public ResponseEntity<Response> register(@RequestBody AuthDTO userData) {
-        if (isInvalid(userData) || userRepository.findByUsername(userData.getUsername()) != null) {
+        if (isInvalid(userData) || userData.getUsername().equals("unknown") || userRepository.findByUsername(userData.getUsername()) != null) {
             return ResponseEntity.badRequest().build();
         }
         
