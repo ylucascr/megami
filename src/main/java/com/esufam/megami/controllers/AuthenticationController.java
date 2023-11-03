@@ -1,5 +1,6 @@
 package com.esufam.megami.controllers;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +21,7 @@ import com.esufam.megami.models.Response;
 import com.esufam.megami.models.User;
 import com.esufam.megami.repositories.UserRepository;
 import com.esufam.megami.services.TokenService;
+import com.esufam.megami.services.UserService;
 
 @RestController
 @RequestMapping(path = "/auth")
@@ -33,9 +35,14 @@ public class AuthenticationController {
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private UserService userService;
+
     @GetMapping(path = "/login")
-    public ResponseEntity<Response> isLoggedIn() {
-        return ResponseEntity.ok(Response.success(null));
+    public ResponseEntity<Response> isLoggedIn(Principal principal) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("username", this.userService.getUserFromPrincipal(principal).getUsername());
+        return ResponseEntity.ok(Response.success(data));
     }
 
     @PostMapping(path = "/login")
