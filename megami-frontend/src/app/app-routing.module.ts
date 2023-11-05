@@ -12,7 +12,7 @@ const routes: Routes = [
   { path: 'form', component: UploadFormPageComponent, canActivate: [authGuard] },
   { path: ':filename/edit', component: UploadFormPageComponent, canActivate: [authGuard] },
   { path: 'u/:username' , component: UserPageComponent },
-  { path: 'feed' , component: MainPageComponent },
+  { path: 'feed' , component: MainPageComponent, canActivate: [authGuard] },
   { path: '' , component: MainPageComponent },
   { path: '**', component: PageNotFoundComponent }
 ];
