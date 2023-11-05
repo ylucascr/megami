@@ -41,7 +41,7 @@ export class DataService {
 
   uploadPost(formData: FormData) {
     return this.http.post<Response>(
-      '${this.apiUrl}/posts/add',
+      `${this.apiUrl}/posts/add`,
       formData
     );
   }
