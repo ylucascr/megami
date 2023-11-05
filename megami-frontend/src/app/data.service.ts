@@ -2,10 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Response } from 'src/models/Response';
 
+import { environment } from 'environments/environments';
+
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
+
+  apiUrl = environment?.apiUrl || 'http://localhost:8080';
 
   constructor(
     private http: HttpClient
@@ -13,57 +17,57 @@ export class DataService {
 
   getAllPosts() {
     return this.http.get<Response>(
-      'http://localhost:8080/posts/all'
+      `${this.apiUrl}/posts/all`
     )
   }
 
   getFeedPosts() {
     return this.http.get<Response>(
-      'http://localhost:8080/posts/feed'
+      `${this.apiUrl}/posts/feed`
     )
   }
 
   getAllPostsFromUser(username: string) {
     return this.http.get<Response>(
-      `http://localhost:8080/posts/from/${username}`
+      `${this.apiUrl}/posts/from/${username}`
     )
   }
 
   getPost(filename: string) {
     return this.http.get<Response>(
-      `http://localhost:8080/posts/${filename}`
+      `${this.apiUrl}/posts/${filename}`
     )
   }
 
   uploadPost(formData: FormData) {
     return this.http.post<Response>(
-      'http://localhost:8080/posts/add',
+      '${this.apiUrl}/posts/add',
       formData
     );
   }
 
   updatePost(filename: string, formData: FormData) {
     return this.http.patch<Response>(
-      `http://localhost:8080/posts/${filename}`,
+      `${this.apiUrl}/posts/${filename}`,
       formData
     );
   }
 
   deletePost(filename: string) {
     return this.http.delete<Response>(
-      `http://localhost:8080/posts/${filename}`
+      `${this.apiUrl}/posts/${filename}`
     );
   }
 
   getUser(username: string) {
     return this.http.get<Response>(
-      `http://localhost:8080/users/${username}`
+      `${this.apiUrl}/users/${username}`
     )
   }
 
   followUser(username: string) {
     return this.http.post<Response>(
-      `http://localhost:8080/users/${username}/follow`,
+      `${this.apiUrl}/users/${username}/follow`,
       {}
     )
   }
