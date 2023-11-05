@@ -1,6 +1,6 @@
 <div class="image grid">
-    <a [href]="'http://localhost:8080/uploads/' + post.filename" target="_blank">
-        <img [src]="'http://localhost:8080/uploads/' + post.filename"/>
+    <a [href]="apiUrl + '/uploads/' + post.filename" target="_blank">
+        <img [src]="apiUrl + '/uploads/' + post.filename"/>
     </a>
     <div class="container">
         <nav>
