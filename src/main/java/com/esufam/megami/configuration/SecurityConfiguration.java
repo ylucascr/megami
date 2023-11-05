@@ -3,6 +3,7 @@ package com.esufam.megami.configuration;
 import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,6 +28,9 @@ import com.esufam.megami.filters.SecurityFilter;
 public class SecurityConfiguration {
     @Autowired
     private SecurityFilter securityFilter;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
     
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -35,7 +39,7 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                     .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
-                    .requestMatchers("/uploads/**").permitAll()
+                    .requestMatchers("/uploads/**", "/actuator/health/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/posts/all").permitAll()
                     .anyRequest().authenticated()
                 )
@@ -47,7 +51,7 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:4200");
+        configuration.addAllowedOrigin(this.frontendUrl);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "DELETE"));
         configuration.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization"));
         configuration.setAllowCredentials(true);
